@@ -36,6 +36,7 @@ public class CommandInterface : MonoBehaviour {
                 {
                     if (selected)
                         selected.GetComponent<Entity>().SetGoal(hit.point);
+                        selected.GetComponent<Entity>().createPath(hit.point);
                 }
             }
 

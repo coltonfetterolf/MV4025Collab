@@ -580,6 +580,40 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 7
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &962031655 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1015981022648372, guid: 86513483bc22b014d8565cf79f17bd11,
+    type: 3}
+  m_PrefabInstance: {fileID: 1029853734}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &962031659
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 962031655}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 373b52eb9bf8c40f785bb6947a1aee66, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  version: 1
+  drawGizmos: 1
+  detailedGizmos: 0
+  startEndModifier:
+    addPoints: 1
+    exactStartPoint: 1
+    exactEndPoint: 3
+    useRaycasting: 1
+    mask:
+      serializedVersion: 2
+      m_Bits: 1024
+    useGraphRaycasting: 0
+  traversableTags: -1
+  tagPenalties: 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+  graphMask:
+    value: -1
 --- !u!1 &995523281
 GameObject:
   m_ObjectHideFlags: 0
@@ -887,19 +921,6 @@ GameObject:
     type: 3}
   m_PrefabInstance: {fileID: 1592012345}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1592012347
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1592012346}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 73e760d633a71480bb4fc822b4e3f57a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  targetPosition: {fileID: 1318429666}
 --- !u!114 &1592012348
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Pathfinding;
 
 public class Entity : MonoBehaviour
 {
@@ -19,6 +20,8 @@ public class Entity : MonoBehaviour
     const float minShotInterval = 0.2f;
     const float maxShotInterval = 0.3f;
     Color shotColor;
+    List<Vector3> path;
+    Seeker seeker;
 
 
     // Use this for initialization
@@ -36,6 +39,8 @@ public class Entity : MonoBehaviour
         }
 
         goal = transform.position;
+        seeker = GetComponent<Seeker>();
+        
 
         GroundClamp();
     }
@@ -68,10 +73,16 @@ public class Entity : MonoBehaviour
     }
 
     void Move()
-    {
+    {   
         LookAtYOnly(goal);
         float maxTravelDist = Time.fixedDeltaTime * speed;
-        transform.position = Vector3.MoveTowards(transform.position, goal, maxTravelDist);
+        if(path != null){
+            transform.position = Vector3.MoveTowards(transform.position, path[0], maxTravelDist);
+        }
+        if(Mathf.Sqrt(Mathf.Pow(transform.position.x - path[0].x,2f) + Mathf.Pow(transform.position.z - path[0].z,2f)) < closeEnough){
+            path.RemoveAt(0);
+        }
+
         GroundClamp();
     }
 
@@ -162,5 +173,18 @@ public class Entity : MonoBehaviour
             cursor.transform.parent = null;
             cursor.transform.position = new Vector3(0, 3, 0);
         }
+    }
+
+    public void OnPathComplete (Path p) {
+        Debug.Log("Yay, we got a path back. Did it have an error? " + p.error);
+        if (!p.error) {
+            path = p.vectorPath;
+            //DrawLine(path);
+        }
+    }
+
+    public void createPath(Vector3 g){
+
+        seeker.StartPath(transform.position, g, OnPathComplete);
     }
 }
