@@ -74,7 +74,7 @@ public class Entity : MonoBehaviour
 
     void Move()
     {   
-        LookAtYOnly(goal);
+        LookAtYOnly(path[0]);
         float maxTravelDist = Time.fixedDeltaTime * speed;
         if(path != null){
             transform.position = Vector3.MoveTowards(transform.position, path[0], maxTravelDist);
