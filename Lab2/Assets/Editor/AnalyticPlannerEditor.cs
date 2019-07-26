@@ -90,8 +90,8 @@ public class AnalyticPlannerEditor : Editor
                     float dist = ((Vector3)pnodeA.position - (Vector3)pnodeB.position).magnitude;
                     float grade = (pnodeA.position.y - pnodeB.position.y)/dist;
                     float ave_observers = planner.observerCount[pnodeA.position] + planner.observerCount[pnodeB.position]/2f;
-                    uint obs_penalty = (uint)(dist * ave_observers * planner.moveObserverPenalty);
-                    float edgeTime = 1/(SpeedOnGrade(grade)*60f);
+                    uint obs_penalty = (uint)(dist * ave_observers * planner.moveObserverPenalty)*10;
+                    float edgeTime = dist/SpeedOnGrade(grade);
 
                     Connection new_conn = new Connection(pnodeB, (uint)edgeTime*10 + obs_penalty, conn.shapeEdge);
                     pnodeA.connections[i] = new_conn;
