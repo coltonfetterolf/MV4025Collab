@@ -27,9 +27,13 @@ public class AnalyticPlanner : MonoBehaviour
 
     public Dictionary<Int3, float> observerCount = null;
     public Dictionary<Int3, float> aveObsCount = null;
-    public Dictionary<Int3, float> positionCost = null;  // Based on observer count
-    public Dictionary<Int3, float> pathCost = null;  // Cost to move to assault point
-    public Dictionary<Int3, float> assaultDistCost = null;  // Distance from assault point to target
-    public List<GraphNode> sectorNodes = null;
+    public Dictionary<Int3, float> MEpositionCost = null;  // Based on observer count in reference to ME
+    public Dictionary<Int3, float> MEpathCost = null;  // Cost to move to assault point in reference to ME
+    public Dictionary<Int3, float> MEassaultDistCost = null;  // Distance from assault point to target in reference to ME
+    public List<GraphNode> MEsectorNodes = null; // Nodes in consideration for ME sector choices
+    public Dictionary<Int3, float> SE1positionCost = null;  // Based on observer count in reference to SE1
+    public Dictionary<Int3, float> SE1pathCost = null;  // Cost to move to assault point in reference to SE1
+    public Dictionary<Int3, float> SE1assaultDistCost = null;  // Distance from assault point to target in reference to SE1
+    public List<GraphNode> SE1sectorNodes = null; // Nodes in consideration for SE1 sector choices
 
 }

@@ -226,10 +226,10 @@ public class AnalyticPlannerEditor : Editor
         if (GUILayout.Button("ME Analysis"))
         {
 
-            planner.positionCost = new Dictionary<Int3, float>();
-            planner.pathCost = new Dictionary<Int3, float>();
-            planner.assaultDistCost = new Dictionary<Int3, float>();
-            planner.sectorNodes = new List<GraphNode>();
+            planner.MEpositionCost = new Dictionary<Int3, float>();
+            planner.MEpathCost = new Dictionary<Int3, float>();
+            planner.MEassaultDistCost = new Dictionary<Int3, float>();
+            planner.MEsectorNodes = new List<GraphNode>();
 
             nmg.ClearMarkers();
             LineRenderer lr = planner.lineVisualizer.GetComponent<LineRenderer>();
@@ -265,24 +265,27 @@ public class AnalyticPlannerEditor : Editor
                 {
                     Vector3 redToNode = (nodePos - redCM).normalized;
                     if (Vector3.Dot(MEsectorAxisVec, redToNode) >= acceptanceProduct)
-                        planner.sectorNodes.Add(node);
+                        planner.MEsectorNodes.Add(node);
                 }
             });
 
             // Compute path length
-            foreach (GraphNode node in planner.sectorNodes)
-            {
-                planner.pathCost[node.position] = 0;
-                planner.assaultDistCost[node.position] = 0;
-                planner.positionCost[node.position] = planner.pathWeight * planner.pathCost[node.position] + planner.observationWeight * planner.aveObsCount[node.position] + planner.assaultDistWeight * planner.assaultDistCost[node.position];
+            // Inputted functions for calulating path cost and assault dist cost
+            foreach (GraphNode node in planner.MEsectorNodes)
+            {   Vector3 nodePos = (Vector3)node.position;
+                nodePos.y = 0f;
+                //Debug.Log(node);
+                planner.MEpathCost[node.position] = planner.pathWeight * (nodePos - blueCM).magnitude;
+                planner.MEassaultDistCost[node.position] = (nodePos - redCM).magnitude * planner.observationWeight;
+                //planner.MEpositionCost[node.position] = planner.pathWeight * planner.MEpathCost[node.position] + planner.observationWeight * planner.aveObsCount[node.position] + planner.assaultDistWeight * planner.MEassaultDistCost[node.position];
             }
         }
 
-        if (GUILayout.Button("ME Observation Cost")) { VisualizeCost(planner.aveObsCount);  }
+        if (GUILayout.Button("ME Observation Cost")) { VisualizeCost(planner.aveObsCount, planner.MEsectorNodes);  }
 
-        if (GUILayout.Button("ME Path Cost")) { VisualizeCost(planner.pathCost); }
+        if (GUILayout.Button("ME Path Cost")) { VisualizeCost(planner.MEpathCost, planner.MEsectorNodes); }
 
-        if (GUILayout.Button("ME Assault Distance Cost")) { VisualizeCost(planner.assaultDistCost);  }
+        if (GUILayout.Button("ME Assault Distance Cost")) { VisualizeCost(planner.MEassaultDistCost, planner.MEsectorNodes);  }
 
         if (GUILayout.Button("ME Assault Position"))
         {
@@ -290,27 +293,27 @@ public class AnalyticPlannerEditor : Editor
             LineRenderer lr = planner.lineVisualizer.GetComponent<LineRenderer>();
             lr.positionCount = 0;
 
-            foreach (GraphNode node in planner.sectorNodes)
+            foreach (GraphNode node in planner.MEsectorNodes)
             {
-                planner.positionCost[node.position] = planner.pathWeight * planner.pathCost[node.position]
+                planner.MEpositionCost[node.position] = planner.pathWeight * planner.MEpathCost[node.position]
                     + planner.observationWeight * planner.observerCount[node.position] 
-                    + planner.assaultDistWeight * planner.assaultDistCost[node.position];
+                    + planner.assaultDistWeight * planner.MEassaultDistCost[node.position];
             }
 
 
             // find min
             Int3 minPos = Int3.zero;
             float min = float.MaxValue;
-            foreach (GraphNode node in planner.sectorNodes)
+            foreach (GraphNode node in planner.MEsectorNodes)
             {
-                if (planner.positionCost[node.position] < min)
+                if (planner.MEpositionCost[node.position] < min)
                 {
-                    min = planner.positionCost[node.position];
+                    min = planner.MEpositionCost[node.position];
                     minPos = node.position;
                 }
             }
 
-            VisualizeCost(planner.positionCost);
+            VisualizeCost(planner.MEpositionCost, planner.MEsectorNodes);
 
             Vector3 rawBlueCM = CMOfTag("BlueForce");
             ABPath path = ABPath.Construct(rawBlueCM, (Vector3)minPos);
@@ -329,14 +332,116 @@ public class AnalyticPlannerEditor : Editor
             lr.SetPositions(positions);
         }
 
+        //As of right now strict copy from ME Analysis
+        //Will change the dot product information to allow for seperate planning then ME
+        if (GUILayout.Button("SE1 Analysis")) 
+        {
+            planner.SE1positionCost = new Dictionary<Int3, float>();
+            planner.SE1pathCost = new Dictionary<Int3, float>();
+            planner.SE1assaultDistCost = new Dictionary<Int3, float>();
+            planner.SE1sectorNodes = new List<GraphNode>();
 
-        if (GUILayout.Button("SE1 Analysis")) { }
+            nmg.ClearMarkers();
+            LineRenderer lr = planner.lineVisualizer.GetComponent<LineRenderer>();
+            lr.positionCount = 0;
 
-        if (GUILayout.Button("SE1 Planning Factor 1")) { }
+            NavGraph graph = AstarPath.active.graphs[0];
 
-        if (GUILayout.Button("SE1 Planning Factor 2")) { }
+            Vector3 rawRedCM = CMOfTag("RedForce");
+            Vector3 redCM = rawRedCM;
+            redCM.y = 0f;
+            Vector3 rawBlueCM = CMOfTag("BlueForce");
+            Vector3 blueCM = rawBlueCM;
+            blueCM.y = 0f;
+            //Need to change axis information
+            Vector3 mainAxisDir = (redCM - blueCM).normalized;
+            Vector3 leftFlank = Vector3.Cross(mainAxisDir, Vector3.up);
+            Vector3 SE1sectorAxisVec = Vector3.zero;
+            //Adjusted Sectors Based on Location of Main Effort
+            //Currently SE1 will default to center if main effort is on left or right flank and default left if main effort is center
+            switch (planner.MEsectorAxis)
+            {
+                case "left": SE1sectorAxisVec = -mainAxisDir; break;
+                case "center": SE1sectorAxisVec = leftFlank; break;
+                case "right": SE1sectorAxisVec = -mainAxisDir; break;
+            }
 
-        if (GUILayout.Button("SE1 Assault Position")) { }
+            float acceptanceAngle = (planner.sectorWidthDegrees / 2f) * (Mathf.PI / 180f);
+            float acceptanceProduct = Mathf.Cos(acceptanceAngle);
+
+            graph.GetNodes(node =>
+            {
+                Vector3 nodePos = (Vector3)node.position;
+                nodePos.y = 0f;
+                float nodeDist = (nodePos - redCM).magnitude;
+                if (nodeDist >= planner.minAssaultDist && nodeDist <= planner.maxAssaultDist)
+                {
+                    Vector3 redToNode = (nodePos - redCM).normalized;
+                    if (Vector3.Dot(SE1sectorAxisVec, redToNode) >= acceptanceProduct)
+                        planner.SE1sectorNodes.Add(node);
+                }
+            });
+
+            // Compute path length
+            // Inputted functions for calulating path cost and assault dist cost
+            foreach (GraphNode node in planner.SE1sectorNodes)
+            {   Vector3 nodePos = (Vector3)node.position;
+                nodePos.y = 0f;
+                //Debug.Log(node);
+                planner.SE1pathCost[node.position] = planner.pathWeight * (nodePos - blueCM).magnitude;
+                planner.SE1assaultDistCost[node.position] = (nodePos - redCM).magnitude * planner.observationWeight;
+                //planner.SE1positionCost[node.position] = planner.pathWeight * planner.MEpathCost[node.position] + planner.observationWeight * planner.aveObsCount[node.position] + planner.assaultDistWeight * planner.MEassaultDistCost[node.position];
+            }
+         }
+        //Visualize SE1 Assault Distance
+        if (GUILayout.Button("SE1 Assault Distance")) { VisualizeCost(planner.SE1assaultDistCost, planner.SE1sectorNodes); }
+        //Visualize SE1 Path Cost
+        if (GUILayout.Button("SE1 Path Cost")) { VisualizeCost(planner.SE1pathCost, planner.SE1sectorNodes); }
+
+        if (GUILayout.Button("SE1 Assault Position")) 
+        { 
+            nmg.ClearMarkers();
+            LineRenderer lr = planner.lineVisualizer.GetComponent<LineRenderer>();
+            lr.positionCount = 0;
+
+            foreach (GraphNode node in planner.SE1sectorNodes)
+            {
+                planner.SE1positionCost[node.position] = planner.pathWeight * planner.SE1pathCost[node.position]
+                    + planner.observationWeight * planner.observerCount[node.position] 
+                    + planner.assaultDistWeight * planner.SE1assaultDistCost[node.position];
+            }
+
+
+            // find min
+            Int3 minPos = Int3.zero;
+            float min = float.MaxValue;
+            foreach (GraphNode node in planner.SE1sectorNodes)
+            {
+                if (planner.SE1positionCost[node.position] < min)
+                {
+                    min = planner.SE1positionCost[node.position];
+                    minPos = node.position;
+                }
+            }
+
+            VisualizeCost(planner.SE1positionCost, planner.SE1sectorNodes);
+
+            Vector3 rawBlueCM = CMOfTag("BlueForce");
+            ABPath path = ABPath.Construct(rawBlueCM, (Vector3)minPos);
+            AstarPath.StartPath(path);
+            Gizmos.color = Color.white;
+            lr = planner.lineVisualizer.GetComponent<LineRenderer>();
+            lr.widthMultiplier = 5f;
+            lr.positionCount = path.vectorPath.Count;
+            Vector3[] positions = new Vector3[path.vectorPath.Count];
+
+            for (int i = 0; i < path.vectorPath.Count; i++)
+            {
+                positions[i] = path.vectorPath[i];
+                positions[i].y += 5f;
+            }
+            lr.SetPositions(positions);
+        }
 
 
         if (GUILayout.Button("SE2 Analysis")) { }
@@ -469,8 +574,8 @@ public class AnalyticPlannerEditor : Editor
             accum += go.transform.position;
         return accum / objs.Length;
     }
-
-    void VisualizeCost(Dictionary<Int3, float> cost)
+    //Added List as a argument of the method to allow for multiple sectors throughout program
+    void VisualizeCost(Dictionary<Int3, float> cost, List<GraphNode> sector)
     {
         AnalyticPlanner planner = (AnalyticPlanner)target;
         GameObject pv = (GameObject)planner.pointVisualizer;
@@ -482,7 +587,7 @@ public class AnalyticPlannerEditor : Editor
         float scale = spacing / 2f;
         float min = float.MaxValue;
         float max = float.MinValue;
-        foreach (GraphNode node in planner.sectorNodes)
+        foreach (GraphNode node in sector)
         {
             float score = cost[node.position];
             if (score < min)
@@ -490,7 +595,7 @@ public class AnalyticPlannerEditor : Editor
             if (score > max)
                 max = score;
         }
-        foreach (GraphNode node in planner.sectorNodes)
+        foreach (GraphNode node in sector)
         { 
             float maxHue = 250f / 360f;
             float frac = (float)(cost[node.position] - min) / (max - min);
