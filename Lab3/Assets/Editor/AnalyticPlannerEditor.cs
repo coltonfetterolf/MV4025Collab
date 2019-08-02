@@ -13,6 +13,7 @@ public class AnalyticPlannerEditor : Editor
 {
 
     float markerHeight = 10f;
+    Quaternion nullRotation = new Quaternion(0f,0f,0f,0f);
 
     int observerCount(Int3 pos, float eyeHeight, GameObject[] observers)
     {
@@ -38,7 +39,7 @@ public class AnalyticPlannerEditor : Editor
 
     float SpeedOnGrade(float grade)
     {
-        float scale = 1000f;
+        float scale = 500f;  /*Changed from 1000f to 500f to make less hill adverse */
         float max_speed = 1f;
         return max_speed / (1f + scale * Mathf.Abs(grade));
     }
@@ -48,6 +49,7 @@ public class AnalyticPlannerEditor : Editor
         AnalyticPlanner planner = (AnalyticPlanner)target;
         planner.pointVisualizer = (GameObject)EditorGUILayout.ObjectField("pointVisualizer",planner.pointVisualizer, typeof(Object), true);
         planner.lineVisualizer = (GameObject)EditorGUILayout.ObjectField("lineVisualizer", planner.lineVisualizer, typeof(Object), true);
+        planner.assaultPosMarker = (GameObject)EditorGUILayout.ObjectField("assaultPosMarker", planner.assaultPosMarker, typeof(Object), true);
         planner.moveObserverPenalty = EditorGUILayout.FloatField("moveObserverPenalty", planner.moveObserverPenalty);
         
         planner.unitWidth = EditorGUILayout.FloatField("unitWidth", planner.unitWidth);
@@ -135,6 +137,7 @@ public class AnalyticPlannerEditor : Editor
             AstarPath.active.data.Awake();
             AstarPath.active.Scan();
             NavGraph graph = AstarPath.active.graphs[0];
+            planner.nodePentalty = new Dictionary<Vector3, float>();
             graph.GetNodes(node =>
             {
                 PointNode pnodeA = (PointNode)node;
@@ -145,7 +148,7 @@ public class AnalyticPlannerEditor : Editor
                     float dist = ((Vector3)pnodeA.position - (Vector3)pnodeB.position).magnitude;
                     float ave_observers = (planner.observerCount[pnodeA.position] + planner.observerCount[pnodeB.position]) / 2f;
                     uint obs_penalty = (uint)(dist * ave_observers * planner.moveObserverPenalty);
-
+                    planner.nodePentalty[(Vector3)pnodeB.position] = obs_penalty;
                     int steps = 5;
                     Vector3 start = (Vector3)pnodeA.position;
                     Vector3 end = (Vector3)pnodeB.position;
@@ -275,7 +278,7 @@ public class AnalyticPlannerEditor : Editor
             {   Vector3 nodePos = (Vector3)node.position;
                 nodePos.y = 0f;
                 //Debug.Log(node);
-                planner.MEpathCost[node.position] = planner.pathWeight * (nodePos - blueCM).magnitude;
+                planner.MEpathCost[node.position] = planner.pathWeight * planner.nodePentalty[(Vector3)node.position];//(nodePos - blueCM).magnitude; //change to obs penalty
                 planner.MEassaultDistCost[node.position] = (nodePos - redCM).magnitude * planner.observationWeight;
                 //planner.MEpositionCost[node.position] = planner.pathWeight * planner.MEpathCost[node.position] + planner.observationWeight * planner.aveObsCount[node.position] + planner.assaultDistWeight * planner.MEassaultDistCost[node.position];
             }
@@ -295,9 +298,10 @@ public class AnalyticPlannerEditor : Editor
 
             foreach (GraphNode node in planner.MEsectorNodes)
             {
-                planner.MEpositionCost[node.position] = planner.pathWeight * planner.MEpathCost[node.position]
+                //Removed weight calculations from equation since the weights are added above.
+                planner.MEpositionCost[node.position] = planner.MEpathCost[node.position]
                     + planner.observationWeight * planner.observerCount[node.position] 
-                    + planner.assaultDistWeight * planner.MEassaultDistCost[node.position];
+                    + planner.MEassaultDistCost[node.position];
             }
 
 
@@ -310,6 +314,7 @@ public class AnalyticPlannerEditor : Editor
                 {
                     min = planner.MEpositionCost[node.position];
                     minPos = node.position;
+                    planner.MEassaltLoc = node;
                 }
             }
 
@@ -330,6 +335,9 @@ public class AnalyticPlannerEditor : Editor
                 positions[i].y += 5f;
             }
             lr.SetPositions(positions);
+            
+            GameObject.Instantiate(planner.assaultPosMarker).transform.SetPositionAndRotation((Vector3)planner.MEassaltLoc.position, nullRotation);
+
         }
 
         //As of right now strict copy from ME Analysis
@@ -388,7 +396,7 @@ public class AnalyticPlannerEditor : Editor
             {   Vector3 nodePos = (Vector3)node.position;
                 nodePos.y = 0f;
                 //Debug.Log(node);
-                planner.SE1pathCost[node.position] = planner.pathWeight * (nodePos - blueCM).magnitude;
+                planner.SE1pathCost[node.position] = planner.pathWeight * planner.nodePentalty[(Vector3)node.position]; //(nodePos - blueCM).magnitude;
                 planner.SE1assaultDistCost[node.position] = (nodePos - redCM).magnitude * planner.observationWeight;
                 //planner.SE1positionCost[node.position] = planner.pathWeight * planner.MEpathCost[node.position] + planner.observationWeight * planner.aveObsCount[node.position] + planner.assaultDistWeight * planner.MEassaultDistCost[node.position];
             }
@@ -406,9 +414,9 @@ public class AnalyticPlannerEditor : Editor
 
             foreach (GraphNode node in planner.SE1sectorNodes)
             {
-                planner.SE1positionCost[node.position] = planner.pathWeight * planner.SE1pathCost[node.position]
+                planner.SE1positionCost[node.position] = planner.SE1pathCost[node.position]
                     + planner.observationWeight * planner.observerCount[node.position] 
-                    + planner.assaultDistWeight * planner.SE1assaultDistCost[node.position];
+                    + planner.SE1assaultDistCost[node.position];
             }
 
 
@@ -421,6 +429,7 @@ public class AnalyticPlannerEditor : Editor
                 {
                     min = planner.SE1positionCost[node.position];
                     minPos = node.position;
+                    planner.SE1assaultLoc = node;
                 }
             }
 
@@ -441,6 +450,7 @@ public class AnalyticPlannerEditor : Editor
                 positions[i].y += 5f;
             }
             lr.SetPositions(positions);
+            GameObject.Instantiate(planner.assaultPosMarker).transform.SetPositionAndRotation((Vector3)planner.SE1assaultLoc.position, nullRotation);
         }
 
 
