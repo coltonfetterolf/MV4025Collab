@@ -345,6 +345,16 @@ public class AnalyticPlannerEditor : Editor
 
         if (GUILayout.Button("Optimize Defensive Position"))
         {
+            GameObject[] defenders = GameObject.FindGameObjectsWithTag("RedForce");
+            float currAveFires = planner.aveFiresPerDefenseNode;
+            float smRad = planner.minDefenseRange;
+            float lrRad = planner.maxDefenseRange / 2;
+            Vector3 defCM = CMOfTag("RedForce");
+            while(currAveFires >= planner.aveFiresPerDefenseNode)
+            {
+
+            }
+
         }
 
         EditorGUILayout.BeginHorizontal();
