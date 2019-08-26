@@ -385,6 +385,7 @@ public class AnalyticPlannerEditor : Editor
                     if(Vector3.Dot(mainAxisDir, nodePos) >= acceptanceProduct)
                     {
                         planner.defensibleNodes.Add(node.position, defensiveValue);
+                        
                     }
                     
                 }
@@ -392,7 +393,11 @@ public class AnalyticPlannerEditor : Editor
                     
             });
 
-            erlk
+            foreach (Int3 node in planner.defensibleNodes.Keys)
+            {
+                
+            }
+            
         }
 
         if (GUILayout.Button("Visualize Avail Def Pos")){ VisualizeCost2(planner.defensibleNodes); }
