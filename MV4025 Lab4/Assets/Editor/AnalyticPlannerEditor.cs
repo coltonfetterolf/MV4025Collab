@@ -8,6 +8,7 @@ using System.IO;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 
+
 [CustomEditor(typeof(AnalyticPlanner))]
 public class AnalyticPlannerEditor : Editor
 {
@@ -33,7 +34,7 @@ public class AnalyticPlannerEditor : Editor
         Vector3 fire = (targetXZ - shooterXZ).normalized;
         foreach (GameObject friendly in friendlies)
         {
-            Vector3 friendlyPosXZ = new Vector3(friendly.transform.position.x,0, friendly.transform.position.z);
+            Vector3 friendlyPosXZ = new Vector3(friendly.transform.position.x, 0, friendly.transform.position.z);
             Vector3 toFriendly = (friendlyPosXZ - shooterXZ).normalized;
             if (Vector3.Dot(fire, toFriendly) > dangerProduct)
                 return false;
@@ -73,7 +74,7 @@ public class AnalyticPlannerEditor : Editor
     }
 
     // Compute visibility between each waypoint and each point on a specified grid
-    Dictionary<Vector3,Dictionary<Int3,bool>> GridVisibility(Vector3 center, float spacing, int n_per_side)
+    Dictionary<Vector3, Dictionary<Int3, bool>> GridVisibility(Vector3 center, float spacing, int n_per_side)
     {
         AstarPath.active.data.Awake();
         AstarPath.active.Scan();
@@ -84,9 +85,9 @@ public class AnalyticPlannerEditor : Editor
         float width = spacing * (n_per_side - 1);
         Vector3 ul = new Vector3(center.x - width / 2, 0, center.z - width / 2);
         Dictionary<Vector3, Dictionary<Int3, bool>> result = new Dictionary<Vector3, Dictionary<Int3, bool>>();
-        for (int j=0;j<n_per_side; j++)
+        for (int j = 0; j < n_per_side; j++)
         {
-            for (int i=0;i<n_per_side;i++)
+            for (int i = 0; i < n_per_side; i++)
             {
                 Dictionary<Int3, bool> vis = new Dictionary<Int3, bool>();
                 Vector3 pos = new Vector3(ul.x + i * spacing, 0, ul.z + j * spacing);
@@ -105,10 +106,10 @@ public class AnalyticPlannerEditor : Editor
     public override void OnInspectorGUI()
     {
         AnalyticPlanner planner = (AnalyticPlanner)target;
-        planner.pointVisualizer = (GameObject)EditorGUILayout.ObjectField("pointVisualizer",planner.pointVisualizer, typeof(Object), true);
+        planner.pointVisualizer = (GameObject)EditorGUILayout.ObjectField("pointVisualizer", planner.pointVisualizer, typeof(Object), true);
         planner.lineVisualizer = (GameObject)EditorGUILayout.ObjectField("lineVisualizer", planner.lineVisualizer, typeof(Object), true);
         planner.moveObserverPenalty = EditorGUILayout.FloatField("moveObserverPenalty", planner.moveObserverPenalty);
-        
+
         planner.unitWidth = EditorGUILayout.FloatField("unitWidth", planner.unitWidth);
         planner.minAssaultDist = EditorGUILayout.FloatField("minAssaultDist", planner.minAssaultDist);
         planner.maxAssaultDist = EditorGUILayout.FloatField("maxAssaultDist", planner.maxAssaultDist);
@@ -149,7 +150,7 @@ public class AnalyticPlannerEditor : Editor
 
             System.Diagnostics.Stopwatch stopWatch = new System.Diagnostics.Stopwatch();
             stopWatch.Start();
-            
+
             // Count observers at each waypoint
             planner.observerCount = new Dictionary<Int3, float>();
             graph.GetNodes(node =>
@@ -170,7 +171,8 @@ public class AnalyticPlannerEditor : Editor
             int pad = (int)Mathf.Floor(planner.unitWidth / 2 / (graph as TerrainGridGraph).node_size);
             int expectedNumNodes = Mathf.RoundToInt(Mathf.Pow(1f + 2 * pad, 2f));
             float maxCount = observers.Length;
-            graph.GetNodes(node => {
+            graph.GetNodes(node =>
+            {
                 Bounds bounds = new Bounds((Vector3)node.position, size);
                 List<GraphNode> neighbors = (graph as TerrainGridGraph).GetNodesInRegion(bounds);
                 if (neighbors.Count < expectedNumNodes)
@@ -343,10 +345,10 @@ public class AnalyticPlannerEditor : Editor
 
         if (GUILayout.Button("Viz Fires")) { VisualizeCost2(planner.numPossibleFires); }
 
-        if(GUILayout.Button("Potential Hit")) { }
+        if (GUILayout.Button("Place Def Rand")) {PlaceDefRandom(); }
 
         planner.aveFiresPerDefenseNode = EditorGUILayout.FloatField("aveFiresPerDefenseNode", planner.aveFiresPerDefenseNode);
-     
+
         EditorGUILayout.EndHorizontal();
 
         if (GUILayout.Button("Optimize Defensive Position"))
@@ -367,40 +369,40 @@ public class AnalyticPlannerEditor : Editor
             Vector3 mainAxisDir = -(defCM - blueCM).normalized;
             float acceptanceAngle = (defensiveSector / 2f) * (Mathf.PI / 180f);
             float acceptanceProduct = Mathf.Cos(acceptanceAngle);
-            planner.defensibleNodes = new Dictionary<Int3,float>();
+            planner.defensibleNodes = new Dictionary<Int3, float>();
             //Obtain definsible positions
             AstarPath.active.data.Awake();
             NavGraph graph = AstarPath.active.graphs[0];
             //List<Int3> defenseNodes = new List<Int3>();
-             graph.GetNodes(node =>
-            {
-                Vector3 pos = (Vector3)node.position;
-                pos.y = 0;
-                float dist = (defCM - pos).magnitude;
-                
-                if (dist <= planner.maxDefenseRange)
-                {
-                    Vector3 nodePos = (pos - defCM).normalized;
-                    nodePos.y = 0f;
-                    if(Vector3.Dot(mainAxisDir, nodePos) >= acceptanceProduct)
-                    {
-                        planner.defensibleNodes.Add(node.position, defensiveValue);
-                        
-                    }
-                    
-                }
-                    
-                    
-            });
+            graph.GetNodes(node =>
+           {
+               Vector3 pos = (Vector3)node.position;
+               pos.y = 0;
+               float dist = (defCM - pos).magnitude;
+
+               if (dist <= planner.maxDefenseRange)
+               {
+                   Vector3 nodePos = (pos - defCM).normalized;
+                   nodePos.y = 0f;
+                   if (Vector3.Dot(mainAxisDir, nodePos) >= acceptanceProduct)
+                   {
+                       planner.defensibleNodes.Add(node.position, defensiveValue);
+
+                   }
+
+               }
+
+
+           });
 
             foreach (Int3 node in planner.defensibleNodes.Keys)
             {
-                
+
             }
-            
+
         }
 
-        if (GUILayout.Button("Visualize Avail Def Pos")){ VisualizeCost2(planner.defensibleNodes); }
+        if (GUILayout.Button("Visualize Avail Def Pos")) { VisualizeCost2(planner.defensibleNodes); }
 
         EditorGUILayout.BeginHorizontal();
         EditorGUILayout.LabelField("MEsectorAxis: " + planner.MEsectorAxis);
@@ -484,11 +486,11 @@ public class AnalyticPlannerEditor : Editor
             }
         }
 
-        if (GUILayout.Button("ME Observation Cost")) { VisualizeCost(planner.aveObsCount);  }
+        if (GUILayout.Button("ME Observation Cost")) { VisualizeCost(planner.aveObsCount); }
 
         if (GUILayout.Button("ME Path Cost")) { VisualizeCost(planner.pathCost); }
 
-        if (GUILayout.Button("ME Assault Distance Cost")) { VisualizeCost(planner.assaultDistCost);  }
+        if (GUILayout.Button("ME Assault Distance Cost")) { VisualizeCost(planner.assaultDistCost); }
 
         if (GUILayout.Button("ME Assault Position"))
         {
@@ -499,7 +501,7 @@ public class AnalyticPlannerEditor : Editor
             foreach (GraphNode node in planner.sectorNodes)
             {
                 planner.positionCost[node.position] = planner.pathWeight * planner.pathCost[node.position]
-                    + planner.observationWeight * planner.observerCount[node.position] 
+                    + planner.observationWeight * planner.observerCount[node.position]
                     + planner.assaultDistWeight * planner.assaultDistCost[node.position];
             }
 
@@ -583,7 +585,7 @@ public class AnalyticPlannerEditor : Editor
                         float dangerProduct = Mathf.Cos(dangerAngle);
                         if (Vector3.Dot(meFires, me2se1) < dangerProduct && Vector3.Dot(se1Fires, -me2se1) < dangerProduct)
                         {
-                            if ((mePos-nodePos).magnitude > 1.5 * planner.unitWidth)
+                            if ((mePos - nodePos).magnitude > 1.5 * planner.unitWidth)
                                 planner.sectorNodes.Add(node);
                         }
                     }
@@ -614,8 +616,8 @@ public class AnalyticPlannerEditor : Editor
                 Vector3 meFires = (redCM - mePos).normalized;
                 Vector3 se1Fires = (redCM - nodePos).normalized;
                 float supportingFireCost = Vector3.Dot(meFires, se1Fires);
-                if (supportingFireCost<0)
-                    supportingFireCost = -2*Vector3.Dot(meFires, se1Fires);
+                if (supportingFireCost < 0)
+                    supportingFireCost = -2 * Vector3.Dot(meFires, se1Fires);
                 planner.supportingFireCost[node.position] = supportingFireCost;
             }
         }
@@ -683,7 +685,7 @@ public class AnalyticPlannerEditor : Editor
         {
             NavGraph graph = AstarPath.active.graphs[0];
             List<GraphNode> remove = new List<GraphNode>();
-            foreach ( GraphNode node in planner.sectorNodes)
+            foreach (GraphNode node in planner.sectorNodes)
             {
                 Vector3 mePos = (Vector3)planner.meAssaultPos;
                 mePos.y = 0f;
@@ -694,7 +696,7 @@ public class AnalyticPlannerEditor : Editor
 
                 Vector3 redCM = CMOfTag("RedForce");
                 redCM.y = 0f;
-                
+
                 Vector3 se1Fires = (redCM - se1Pos).normalized;
                 Vector3 se2tose1 = (se1Pos - nodePos).normalized;
                 Vector3 se2Fires = (redCM - nodePos).normalized;
@@ -792,7 +794,8 @@ public class AnalyticPlannerEditor : Editor
             TerrainGridGraph gridGraph = (TerrainGridGraph)graph;
             float spacing = gridGraph.node_size;
             float scale = spacing / 2f;
-            graph.GetNodes(node => {
+            graph.GetNodes(node =>
+            {
                 Vector3 markerPos = (Vector3)node.position;
                 markerPos.y += markerHeight;
                 nmg.CreateMarker(markerPos, Color.blue, scale);
@@ -807,11 +810,12 @@ public class AnalyticPlannerEditor : Editor
             float spacing = gridGraph.node_size;
             float scale = spacing / 2f;
             GameObject[] observers = GameObject.FindGameObjectsWithTag("RedForce");
-            graph.GetNodes(node => {
-                float frac = (float) planner.observerCount[node.position] / observers.Length;
+            graph.GetNodes(node =>
+            {
+                float frac = (float)planner.observerCount[node.position] / observers.Length;
                 Vector3 markerPos = (Vector3)node.position;
                 markerPos.y += markerHeight;
-                nmg.CreateMarker(markerPos, new Color(frac,frac,frac), scale);
+                nmg.CreateMarker(markerPos, new Color(frac, frac, frac), scale);
             });
         }
 
@@ -824,14 +828,16 @@ public class AnalyticPlannerEditor : Editor
             float scale = spacing / 2f;
             float min = float.MaxValue;
             float max = float.MinValue;
-            graph.GetNodes(node => {
+            graph.GetNodes(node =>
+            {
                 float score = planner.aveObsCount[node.position];
                 if (score < min)
                     min = score;
                 if (score > max)
                     max = score;
             });
-            graph.GetNodes(node => {
+            graph.GetNodes(node =>
+            {
                 float maxHue = 250f / 360f;
                 float frac = (float)(planner.aveObsCount[node.position] - min) / (max - min);
                 float hue = (1f - frac) * maxHue;
@@ -916,7 +922,7 @@ public class AnalyticPlannerEditor : Editor
                 max = score;
         }
         foreach (GraphNode node in planner.sectorNodes)
-        { 
+        {
             float maxHue = 250f / 360f;
             float frac = (float)(cost[node.position] - min) / (max - min);
             float hue = (1f - frac) * maxHue;
@@ -931,7 +937,7 @@ public class AnalyticPlannerEditor : Editor
         {
             Vector3 markerPos = (Vector3)planner.meAssaultPos;
             markerPos.y += 1.5f * markerHeight;
-            nmg.CreateMarker(markerPos, Color.white, 1.5f*scale);
+            nmg.CreateMarker(markerPos, Color.white, 1.5f * scale);
         }
 
         if (planner.se1AssaultPosSet)
@@ -980,5 +986,24 @@ public class AnalyticPlannerEditor : Editor
             markerPos.y += markerHeight;
             nmg.CreateMarker(markerPos, c, scale);
         }
+    }
+
+    void PlaceDefRandom()
+    {
+        AnalyticPlanner planner = (AnalyticPlanner)target;
+        List<Int3> keyList = new List<Int3>(planner.defensibleNodes.Keys);
+        Random rand = new Random();
+        
+        GameObject[] defenders = GameObject.FindGameObjectsWithTag("RedForce");
+        Vector3 pos;
+        foreach (GameObject go in defenders)
+        {
+            int randomKey;
+            randomKey = Random.Range(0,planner.defensibleNodes.Count);
+            pos = (Vector3)keyList[randomKey];
+            pos.y = Terrain.activeTerrain.SampleHeight(pos);
+            go.transform.position = pos;
+        }
+
     }
 }
