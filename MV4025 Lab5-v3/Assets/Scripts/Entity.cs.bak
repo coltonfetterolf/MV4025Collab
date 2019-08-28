@@ -1,0 +1,506 @@
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using Pathfinding;
+
+//using System;
+using ConvNetSharp.Core;
+using ConvNetSharp.Core.Layers.Double;
+using ConvNetSharp.Core.Training.Double;
+using ConvNetSharp.Volume;
+using ConvNetSharp.Volume.Double;
+
+public class Entity : MonoBehaviour
+{
+
+    const float closeEnough = 0.1f;
+    List<Vector3> path = new List<Vector3>();
+    GameObject target = null;
+    const float speed = 10f;
+    const float pKill = 0.01f;
+    float timeToNextShot = float.PositiveInfinity;
+    string targetTag = null;
+    const float range = 10f;
+    const float height = 0.0175f; // Units of 100m
+    const float eyeDrop = 0.0012f;
+    const float eyeHeight = height - eyeDrop;
+    const float minShotInterval = 0.2f;
+    const float maxShotInterval = 0.3f;
+    const float congestionSlowdownFactor = 0.1f;
+    const float congestionDist = 4f;
+
+    public Transform fireVizPrefab;
+    GameObject fireViz;
+    bool dead = false;
+    float AIUpdatePeriod = 1f;
+
+    // AI
+    public bool AIControl = false;
+    public int nSectors = 8;
+    Vector3[] sectorCenters;
+    float nextAIUpdate = 0f;
+    float reward = 0f;
+    float epsilon = 0.5f;
+    Net<double> net;
+
+    class AIState
+    {
+        public float[] state_blue, state_red;
+        public AIState(int nSectors)
+        {
+            state_blue = new float[nSectors];
+            state_red = new float[nSectors];
+        }
+        public double[] toDoubleArray()
+        {
+            double[] result = new double[state_blue.Length + state_red.Length];
+            state_blue.CopyTo(result, 0);
+            state_red.CopyTo(result, state_blue.Length);
+            return result;
+        }
+    }
+
+    AIState current_state, last_state;
+    int last_action;
+
+    class Experience
+    {
+        public AIState state_before, state_after;
+        public int action;
+        public float reward;
+        public Experience(AIState state_before, int action, float reward, AIState state_after) {
+            this.state_before = state_before;
+            this.action = action;
+            this.reward = reward;
+            this.state_after = state_after;
+        }
+    }
+
+    class ExperienceReplayBuffer
+    {
+        Experience[] buffer;
+        int count = 0;
+
+        public ExperienceReplayBuffer(int size)
+        {
+            buffer = new Experience[size];
+        }
+
+        public void Add(Experience exp)
+        {
+            if (count < buffer.Length)
+                buffer[count] = exp;
+            else
+            {
+                int index = (int)Mathf.Floor(Random.Range(0f, buffer.Length));
+                buffer[index] = exp;
+            }
+            ++count;
+        }
+
+        public Experience GetRandom()
+        {
+            int max_index = GetNumber();
+            int index = (int)Mathf.Floor(Random.Range(0f, max_index));
+            return buffer[index];
+        }
+
+        public int GetNumber()
+        {
+            return Mathf.Max(count, buffer.Length);
+        }
+    }
+
+    ExperienceReplayBuffer erBuffer;
+
+    void GenerateSample(ExperienceReplayBuffer buf, double gamma, int batch_size, out Volume x_vol, out Volume y_vol)
+    {
+        x_vol = new Volume(new NcwhVolumeStorage<double>(new Shape(1, 1, 2*nSectors, batch_size) ));
+        y_vol = new Volume(new NcwhVolumeStorage<double>(new Shape(1, 1, nSectors, batch_size)));
+        Volume<double> x_vol_single = new Volume(new NcwhVolumeStorage<double>(new Shape(1, 1, 2 * nSectors, 1)));
+        for (int batch=0;batch<batch_size;batch++)
+        {
+            Experience exp = buf.GetRandom();
+            double[] state_before = exp.state_before.toDoubleArray();
+            for (int j = 0; j < nSectors; j++)
+            {
+                x_vol_single.Set(1, 1, j, 1, state_before[j]);
+                x_vol.Set(1, 1, j, batch, state_before[j]);
+            }
+            Volume<double> y_vol_single = net.Forward(x_vol_single);
+            double Q_before = y_vol_single.Get(exp.action);
+            double[] state_after = exp.state_after.toDoubleArray();
+            for (int j = 0; j < nSectors; j++)
+            {
+                x_vol_single.Set(1, 1, j, 1, state_after[j]);
+            }
+            y_vol_single = net.Forward(x_vol_single);
+            double max_Q = y_vol_single.Get(0);
+            for (int i=1; i<nSectors; i++)
+            {
+                y_vol.Set(1, 1, i, batch);
+                if (y_vol_single.Get(0) > max_Q)
+                    max_Q = y_vol_single.Get(0);
+            }
+            double desired_Q = exp.reward + gamma * max_Q;
+            y_vol.Set(1, 1, exp.action, batch);
+        }
+    }
+    
+
+    // Use this for initialization
+    void Start()
+    {
+        Random.InitState( System.DateTime.Now.Millisecond );
+
+        if (gameObject.tag == "BlueForce")
+            targetTag = "RedForce";
+        else
+            targetTag = "BlueForce";
+
+        fireViz = Instantiate(fireVizPrefab).gameObject;
+        fireViz.SetActive(false);
+
+        // AI
+        sectorCenters = new Vector3[nSectors];
+        float sectorWidth = 2 * Mathf.PI / nSectors;
+        float centerAngle = 0f;
+        for (int i=0;i<nSectors;++i)
+        {
+            sectorCenters[i].z = Mathf.Cos(centerAngle);
+            sectorCenters[i].x = Mathf.Sin(centerAngle);
+            centerAngle += sectorWidth;
+            //Debug.Log(i+" "+ sectorCenters[i].x+" "+ sectorCenters[i].z);
+        }
+        erBuffer = new ExperienceReplayBuffer(500);
+
+        // Create
+        net = new Net<double>();
+        net.AddLayer(new InputLayer(1, 1, 2*nSectors));
+        net.AddLayer(new FullyConnLayer(nSectors));
+        net.AddLayer(new RegressionLayer());
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        fireViz.SetActive(false);
+        if (target && target.GetComponent<Entity>().IsDead())
+            target = null;
+        if (target)
+        {
+            Vector3 fromPosition = transform.position;
+            fromPosition.y += eyeHeight;
+            Vector3 toPosition = target.transform.position;
+            toPosition.y += height;
+
+            fireViz.SetActive(true);
+            Vector3[] positions = new Vector3[2];
+            positions[0] = fromPosition;
+            positions[1] = toPosition;
+            LineRenderer lr = fireViz.GetComponent<LineRenderer>();
+            //lr.widthMultiplier = 5f;
+            lr.positionCount = 2;
+            lr.SetPositions(positions);
+        }
+    }
+
+    /*
+    void GroundClamp()
+    {
+        Vector3 pos = transform.position;
+        pos.y = Terrain.activeTerrain.SampleHeight(transform.position);
+        transform.position = pos;
+    }
+    */
+
+    void LookAtYOnly(Vector3 target)
+    {
+        transform.LookAt(target);
+        transform.eulerAngles = new Vector3(0, transform.eulerAngles.y, 0);
+    }
+
+    public void OnPathComplete(Path p)
+    {
+        Debug.Log("Yay, we got a path back. Did it have an error? " + p.error);
+    }
+
+    float DistanceXZ(Vector3 a, Vector3 b)
+    {
+        return Mathf.Sqrt((a.x - b.x) * (a.x - b.x) + (a.z - b.z) * (a.z - b.z));
+    }
+
+    bool IsCongested()
+    {
+        GameObject[] nearby = GameObject.FindGameObjectsWithTag(gameObject.tag);
+        foreach (GameObject friendly in nearby)
+        {
+            if (friendly == gameObject) continue;
+            float dist = Vector3.Distance(friendly.transform.position, gameObject.transform.position);
+            if (dist < congestionDist)
+                return true;
+        }
+        return false;
+    }
+
+    float RewardDistToTarget()
+    {
+        GameObject[] nearby = GameObject.FindGameObjectsWithTag(targetTag);
+        float max_val = 1.0f / range;
+        float reward = 0.0f;
+        foreach (GameObject target in nearby)
+        {
+            float dist = Vector3.Distance(target.transform.position, gameObject.transform.position);
+            if (1.0 / dist > reward)
+                reward = Mathf.Min(1.0f / dist, max_val);
+        }
+        //Debug.Log("in RewardDistToTarget(), reward " + reward);
+        return reward;
+    }
+
+    void Move()
+    {
+        if (gameObject.name == "BlueEntity (1)" && path.Count > 0)
+            Debug.Log("BlueEntity (1) moving");
+        if (path.Count == 0)
+            return;
+        Vector3 goal = path[0];
+
+        if (gameObject.name == "BlueEntity (1)" && path.Count > 0)
+            Debug.Log(transform.position + " " + goal + " " + Vector3.Distance(transform.position, goal));
+
+        if (DistanceXZ(transform.position, goal) < closeEnough)
+        {
+            path.RemoveAt(0);
+            if (path.Count == 0)
+                return;
+            goal = path[0];
+        }
+        if (gameObject.name == "BlueEntity (1)")
+            Debug.Log("BlueEntity (1) goal: " + goal);
+        LookAtYOnly(goal);
+        float maxTravelDist = Time.fixedDeltaTime * speed;
+        if (IsCongested())
+            maxTravelDist *= congestionSlowdownFactor;
+        transform.position = Vector3.MoveTowards(transform.position, goal, maxTravelDist);
+        //GroundClamp();
+    }
+
+    void Search()
+    {
+        if (gameObject.name == "Blue Entity (1)")
+            Debug.Log("Blue Entity (1) searching");
+        GameObject[] targets = GameObject.FindGameObjectsWithTag(targetTag);
+        Vector3 fromPosition = transform.position;
+        fromPosition.y += eyeHeight;
+        float minTargetDistance = float.PositiveInfinity;
+        RaycastHit hit;
+        foreach (var targ in targets)
+        {
+            bool possibleTarget = false;
+
+            // We can always shoot back at someone shooting at us regardless of range or obstacles
+            if (targ.GetComponent<Entity>().GetTarget() == gameObject)
+            {
+                Debug.Log("Entity " + gameObject.name + " being shot at by " + targ.name);
+                possibleTarget = true;
+            }
+
+            Vector3 toPosition = targ.transform.position;
+            toPosition.y += height;
+            Vector3 direction = toPosition - fromPosition;
+            float distToTarget = direction.magnitude;
+
+            if (distToTarget < range && Physics.Raycast(fromPosition, direction, out hit, distToTarget+1f))
+            {
+                if (hit.transform.gameObject == targ)
+                {
+                    possibleTarget = true;
+                }
+            }
+
+            if (possibleTarget)
+            {
+                if (distToTarget < minTargetDistance)
+                {
+                    minTargetDistance = distToTarget;
+                    target = targ;
+                }
+            }
+        }
+        if (target)
+        {
+            LookAtYOnly(target.transform.position);
+            timeToNextShot = Random.Range(minShotInterval, maxShotInterval);
+        }
+    }
+
+    void Shoot()
+    {
+        timeToNextShot -= Time.fixedDeltaTime;
+        if (timeToNextShot <= 0)
+        {
+            timeToNextShot += Random.Range(minShotInterval, maxShotInterval);
+            Debug.Log(gameObject.name + " shooting " + target.name);
+            if (Random.Range(0f, 1f) <= pKill)
+            {
+                Debug.Log("hit");
+                target.GetComponent<Entity>().Die();
+                target = null;
+            }
+        }
+    }
+
+    void Die()
+    {
+        dead = true;
+        fireViz.SetActive(false);
+        gameObject.SetActive(false);
+    }
+
+    bool IsDead() { return dead; }
+
+    void FixedUpdate()
+    {
+        // AI
+        nextAIUpdate -= Time.deltaTime;
+        if (AIControl && nextAIUpdate <= 0f)
+        {
+            nextAIUpdate = AIUpdatePeriod;
+            current_state = CreateState();
+            // Store experience, if we have one
+            if (last_state!=null)
+            {
+                Experience exp = new Experience(last_state, last_action, reward, current_state);
+                erBuffer.Add(exp);
+            }
+            int action = AISelectAction();
+            reward = RewardDistToTarget();
+            TakeAction(action);
+            last_action = action;
+            last_state = current_state;
+        }
+
+        // Moving and shooting mechanics
+        if (!target)
+            Search();
+        if (!target)
+            Move();
+        else
+            Shoot();
+    }
+
+    public void ClearPath()
+    {
+        path.Clear();
+    }
+
+    public void AddToPath(Vector3 g)
+    {
+        path.Add(g);
+    }
+
+    public GameObject GetTarget()
+    {
+        return target;
+    }
+
+    AIState CreateState()
+    {
+        AIState ai_state = new AIState(nSectors);
+
+        for (int i= 0;i < nSectors;i++) {
+            ai_state.state_red[i] = 0f;
+            ai_state.state_blue[i] = 0f;
+        }
+
+
+        GameObject[] red_units = GameObject.FindGameObjectsWithTag("RedForce");
+        foreach (var unit in red_units)
+        {
+            if (unit == gameObject) continue;
+            for (int i = 0; i < nSectors; i++)
+            {
+                Vector3 center = transform.TransformDirection( sectorCenters[i] );
+                float dot = Vector3.Dot(center, (unit.transform.position - transform.position).normalized);
+                if (dot > 0)
+                    ai_state.state_red[i] += dot;
+            }
+        }
+
+        GameObject[] blue_units = GameObject.FindGameObjectsWithTag("BlueForce");
+        foreach (var unit in blue_units)
+        {
+            if (unit == gameObject) continue;
+            for (int i = 0; i < nSectors; i++)
+            {
+                Vector3 center = transform.TransformDirection(sectorCenters[i]);
+                float dot = Vector3.Dot(center, (unit.transform.position-transform.position).normalized);
+                if (dot > 0)
+                    ai_state.state_blue[i] += dot;
+            }
+        }
+
+        var debug_str = "state_blue ";
+        for (int i = 0;i<nSectors;++i)
+        {
+            debug_str += ai_state.state_blue[i];
+            debug_str += " ";
+        }
+        debug_str += " state_red ";
+        for (int i = 0; i < nSectors; ++i)
+        {
+            debug_str += ai_state.state_red[i];
+            debug_str += " ";
+        }
+
+        //Debug.Log(debug_str);
+        return ai_state;
+    }
+
+    int AISelectAction()
+    {
+        if (Random.Range(0f, 1f) < epsilon)
+        {
+            Debug.Log("AISelectAction(): exploratory action");
+            return (int)Mathf.Floor(Random.Range(0f, (float)nSectors));
+        }
+        Debug.Log("AISelectAction(): exploitive action");
+        var x_array = current_state.toDoubleArray();
+        var x = BuilderInstance.Volume.From(x_array, new Shape(x_array.Length));
+        var y = net.Forward(x);
+        double best_score = System.Double.NegativeInfinity;
+        int best_index = -1;
+        for (int i=0;i<nSectors;i++)
+        {
+            if (y.Get(i) > best_score)
+            {
+                best_score = y.Get(i);
+                best_index = i;
+            }
+        }
+        return best_index;
+    }
+
+    void AILearn()
+    {
+        int batch_size = 8;
+        double gamma = 0.9;
+        if (erBuffer.GetNumber() < 2 * batch_size)
+            return;
+        Volume x_vol, y_vol;
+        GenerateSample(erBuffer, gamma, batch_size, out x_vol, out y_vol);
+        var trainer = new SgdTrainer(net) { LearningRate = 0.01, BatchSize=batch_size };
+        trainer.Train(x_vol, y_vol);
+        }
+
+    void TakeAction(int action)
+    {
+        float lngth = 5f;
+        Vector3 direction = sectorCenters[action];
+        Vector3 goal = transform.position + transform.TransformDirection(lngth*direction);
+        path.Clear();
+        path.Add( goal );
+    }
+}
+
