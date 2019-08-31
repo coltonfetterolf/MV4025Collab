@@ -116,7 +116,7 @@ public static class ExperimentControl
 
         // Set timeScale impossibly high if this is a server build to run as fast as possible
         if (SystemInfo.graphicsDeviceID == 0)
-            Time.timeScale = 100f;
+            Time.timeScale = 10000000f;
 
         json_parameters = new Dictionary<string, string>();
         if (File.Exists("todo.txt"))

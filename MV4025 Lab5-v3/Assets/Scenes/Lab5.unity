@@ -562,6 +562,11 @@ PrefabInstance:
       propertyPath: respawnWidth
       value: 10
       objectReference: {fileID: 0}
+    - target: {fileID: 2873151903063241086, guid: fc828532e8cd1564e848e7152ab06e5a,
+        type: 3}
+      propertyPath: AIControl
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: fc828532e8cd1564e848e7152ab06e5a, type: 3}
 --- !u!1 &1089553538
