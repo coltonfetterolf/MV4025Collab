@@ -56,7 +56,7 @@ public static class ExperimentControl
             if (ExperimentControl.json_parameters.ContainsKey("seed"))
                 seed = int.Parse(json_parameters["seed"]);
 
-            train_duration = 2400f;
+            train_duration = 24000f;
             if (ExperimentControl.json_parameters.ContainsKey("train_duration"))
                 train_duration = float.Parse(json_parameters["train_duration"]);
 
@@ -82,23 +82,23 @@ public static class ExperimentControl
             if (ExperimentControl.json_parameters.ContainsKey("ranged_state"))
                 ranged_state = bool.Parse(ExperimentControl.json_parameters["ranged_state"]);
 
-            learning_rate = 0.1f;
+            learning_rate = 0.11f;
             if (ExperimentControl.json_parameters.ContainsKey("learning_rate"))
                 learning_rate = float.Parse(ExperimentControl.json_parameters["learning_rate"]);
 
-            num_hidden_units = 0;
+            num_hidden_units = 4;
             if (ExperimentControl.json_parameters.ContainsKey("num_hidden_units"))
                 num_hidden_units = int.Parse(ExperimentControl.json_parameters["num_hidden_units"]);
 
-            type_hidden_units = "tanh";
+            type_hidden_units = "relu";
             if (ExperimentControl.json_parameters.ContainsKey("type_hidden_units"))
                 type_hidden_units = ExperimentControl.json_parameters["type_hidden_units"];
 
-            discount_factor = 0.9f;
+            discount_factor = 1.0f;
             if (ExperimentControl.json_parameters.ContainsKey("discount_factor"))
                 discount_factor = float.Parse(json_parameters["discount_factor"]);
 
-            loss_factor = 0.6f;
+            loss_factor = 0.4f;
             if (ExperimentControl.json_parameters.ContainsKey("loss_factor"))
                 loss_factor = float.Parse(json_parameters["loss_factor"]);
 
@@ -116,7 +116,7 @@ public static class ExperimentControl
 
         // Set timeScale impossibly high if this is a server build to run as fast as possible
         if (SystemInfo.graphicsDeviceID == 0)
-            Time.timeScale = 10000000f;
+            Time.timeScale = 10000000000f;
 
         json_parameters = new Dictionary<string, string>();
         if (File.Exists("todo.txt"))

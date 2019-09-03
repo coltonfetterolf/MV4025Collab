@@ -11,16 +11,16 @@ import sys
 # Users should only change design_str
 design_str = """
 {
-	"replications" : 3,
+	"replications" : 10,
 	"factors" : 
 		[
 			{
 				"name" : "train_duration",
-				"levels" : [ 2400 ]
+				"levels" : [ 240000 ]
 			},
 			{
 				"name" : "test_duration",
-				"levels" : [ 60 ]
+				"levels" : [ 100 ]
 			},
 			{
 				"name" : "reward_timeout",
@@ -36,7 +36,7 @@ design_str = """
 			},
 			{
 				"name" : "learning_rate",
-				"levels" : [ 0.1 ]
+				"levels" : [ 0.09 ]
 			},
 			{
 				"name" : "ranged_state",
@@ -48,15 +48,15 @@ design_str = """
 			},
 			{
 				"name" : "type_hidden_units",
-				"levels" : [ "relu" ]
+				"levels" : [ "tanh" ]
 			},
 			{
 				"name" : "discount_factor",
-				"levels" : [ 0.9 ]
+				"levels" : [ 1.0 ]
 			},
 			{
 				"name" : "loss_factor",
-				"levels" : [ 0.5 ]
+				"levels" : [ 0.4 ]
 			},
 			{
 				"name" : "mobility_model",

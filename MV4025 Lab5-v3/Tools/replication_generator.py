@@ -11,7 +11,7 @@ import sys
 # Users should only change design_str
 design_str = """
 {
-	"replications" : 3,
+	"replications" : 5,
 	"factors" : 
 		[
 			{
