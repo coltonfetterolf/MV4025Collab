@@ -11,7 +11,7 @@ import sys
 # Users should only change design_str
 design_str = """
 {
-	"replications" : 10,
+	"replications" : 2,
 	"factors" : 
 		[
 			{
@@ -24,7 +24,7 @@ design_str = """
 			},
 			{
 				"name" : "reward_timeout",
-				"levels" : [ 20 ]
+				"levels" : [ 40 ]
 			},
 			{
 				"name" : "load_brain",
@@ -36,7 +36,7 @@ design_str = """
 			},
 			{
 				"name" : "learning_rate",
-				"levels" : [ 0.05 ]
+				"levels" : [ 0.03, 0.05 ]
 			},
 			{
 				"name" : "ranged_state",
@@ -44,11 +44,11 @@ design_str = """
 			},
 			{
 				"name" : "num_hidden_units",
-				"levels" : [ 80 ]
+				"levels" : [ 60 ]
 			},
 			{
 				"name" : "type_hidden_units",
-				"levels" : [ "relu" ]
+				"levels" : [ "tanh" ]
 			},
 			{
 				"name" : "discount_factor",
@@ -56,7 +56,7 @@ design_str = """
 			},
 			{
 				"name" : "loss_factor",
-				"levels" : [ 1.1 ]
+				"levels" : [ 0.8 ]
 			},
 			{
 				"name" : "mobility_model",

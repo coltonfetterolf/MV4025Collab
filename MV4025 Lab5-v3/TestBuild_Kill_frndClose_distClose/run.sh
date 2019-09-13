@@ -1,3 +1,3 @@
 while [ -f "todo.txt" ]; do
-./TestBuild.app/Contents/MacOS/TestBuild;
+./TestBuild_KillminusLoss_friendDist_distClose.app/Contents/MacOS/TestBuild_KillminusLoss_friendDist_distClose;
 done
