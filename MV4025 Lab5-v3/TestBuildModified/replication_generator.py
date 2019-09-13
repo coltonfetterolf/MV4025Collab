@@ -20,7 +20,7 @@ design_str = """
 			},
 			{
 				"name" : "test_duration",
-				"levels" : [ 100 ]
+				"levels" : [ 80 ]
 			},
 			{
 				"name" : "reward_timeout",
@@ -48,7 +48,7 @@ design_str = """
 			},
 			{
 				"name" : "type_hidden_units",
-				"levels" : [ "relu" ]
+				"levels" : [ "tanh" ]
 			},
 			{
 				"name" : "discount_factor",

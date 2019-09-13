@@ -1,0 +1,14 @@
+98end_time, 2019/09/12 19:01:01.7394, runtime, 24100, discount_factor, 0.99, type_hidden_units, relu, test_duration, 100, learning_rate, 0.05, reward_timeout, 20, mobility_model, NoGradePenalty, seed, 2117001172, load_brain, False, num_hidden_units, 80, train_duration, 24000, respawnWidth, 15, loss_factor, 1.1, ranged_state, True, n_updates, 2000, runtime, 99.93945, running_ave_reward, 0, 
+end_time, 2019/09/12 19:01:15.5312, runtime, 24100, discount_factor, 0.99, type_hidden_units, relu, test_duration, 100, learning_rate, 0.05, reward_timeout, 20, mobility_model, NoGradePenalty, seed, 504432509, load_brain, False, num_hidden_units, 80, train_duration, 24000, respawnWidth, 15, loss_factor, 1.1, ranged_state, True, n_updates, 2000, runtime, 99.97852, running_ave_reward, 0, 
+end_time, 2019/09/12 19:01:21.1551, runtime, 24100, discount_factor, 0.99, type_hidden_units, relu, test_duration, 100, learning_rate, 0.05, reward_timeout, 20, mobility_model, NoGradePenalty, seed, 1359195386, load_brain, False, num_hidden_units, 80, train_duration, 24000, respawnWidth, 15, loss_factor, 1.1, ranged_state, True, n_updates, 2000, runtime, 99.90039, running_ave_reward, 0, 
+
+First Three Runs concluded successfully, weird error on last 7
+
+
+
+IndexOutOfRangeException: Index was outside the bounds of the array.
+  at Entity.TakeAction (System.Int32 action) [0x0000f] in <42ea74045ed84b11aeaa153a50156027>:0 
+  at Entity.AlsoUpdate () [0x00180] in <42ea74045ed84b11aeaa153a50156027>:0 
+  at Entity.FixedUpdate () [0x000d8] in <42ea74045ed84b11aeaa153a50156027>:0 
+ 
+(Filename: <42ea74045ed84b11aeaa153a50156027> Line: 0)

@@ -1,5 +1,5 @@
 #!/bin/bash
-n="1"
+n="3"
 echo "Spawning $n processes"
 for ((i=1; i <= $n; i++))
 do
