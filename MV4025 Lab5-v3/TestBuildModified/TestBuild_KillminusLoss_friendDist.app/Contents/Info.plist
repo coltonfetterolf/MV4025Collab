@@ -10,7 +10,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
-	<string>TestBuildNoMute</string>
+	<string>TestBuild_KillminusLoss_friendDist</string>
 	<key>CFBundleGetInfoString</key>
 	<string>Unity Player version 2019.1.12f1 (f04f5427219e). (c) 2019 Unity Technologies ApS. All rights reserved.</string>
 	<key>CFBundleIconFile</key>

@@ -56,15 +56,15 @@ public static class ExperimentControl
             if (ExperimentControl.json_parameters.ContainsKey("seed"))
                 seed = int.Parse(json_parameters["seed"]);
 
-            train_duration = 24000f;
+            train_duration = 2400f;
             if (ExperimentControl.json_parameters.ContainsKey("train_duration"))
                 train_duration = float.Parse(json_parameters["train_duration"]);
 
-            test_duration = 60f;
+            test_duration = 100f;
             if (ExperimentControl.json_parameters.ContainsKey("test_duration"))
                 test_duration = float.Parse(json_parameters["test_duration"]);
 
-            reward_timeout = 10f;
+            reward_timeout = 20f;
             if (ExperimentControl.json_parameters.ContainsKey("reward_timeout"))
                 reward_timeout = float.Parse(json_parameters["reward_timeout"]);
 
@@ -82,11 +82,11 @@ public static class ExperimentControl
             if (ExperimentControl.json_parameters.ContainsKey("ranged_state"))
                 ranged_state = bool.Parse(ExperimentControl.json_parameters["ranged_state"]);
 
-            learning_rate = 0.11f;
+            learning_rate = 0.05f;
             if (ExperimentControl.json_parameters.ContainsKey("learning_rate"))
                 learning_rate = float.Parse(ExperimentControl.json_parameters["learning_rate"]);
 
-            num_hidden_units = 4;
+            num_hidden_units = 20;
             if (ExperimentControl.json_parameters.ContainsKey("num_hidden_units"))
                 num_hidden_units = int.Parse(ExperimentControl.json_parameters["num_hidden_units"]);
 
@@ -94,11 +94,11 @@ public static class ExperimentControl
             if (ExperimentControl.json_parameters.ContainsKey("type_hidden_units"))
                 type_hidden_units = ExperimentControl.json_parameters["type_hidden_units"];
 
-            discount_factor = 1.0f;
+            discount_factor = .99f;
             if (ExperimentControl.json_parameters.ContainsKey("discount_factor"))
                 discount_factor = float.Parse(json_parameters["discount_factor"]);
 
-            loss_factor = 0.4f;
+            loss_factor = 1.1f;
             if (ExperimentControl.json_parameters.ContainsKey("loss_factor"))
                 loss_factor = float.Parse(json_parameters["loss_factor"]);
 
