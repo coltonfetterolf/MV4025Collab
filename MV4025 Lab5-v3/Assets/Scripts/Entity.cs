@@ -27,6 +27,7 @@ public class Entity : MonoBehaviour
     const float minShotInterval = 0.2f;
     const float maxShotInterval = 0.3f;
     const float radius = 4f;
+    const float friDistFactor = 10f;
 
     public Transform fireVizPrefab;
     GameObject fireViz;
@@ -312,7 +313,7 @@ public class Entity : MonoBehaviour
         {
             if (fri == gameObject) continue;
             friendDist = Vector3.Distance(fri.transform.position, gameObject.transform.position);
-            friendDistReward = 1/friendDist;
+            friendDistReward = friDistFactor * 1.0f / friendDist;
         }
         
         killReward = kill_factor * kills_this_update - loss_factor * losses_this_update;
