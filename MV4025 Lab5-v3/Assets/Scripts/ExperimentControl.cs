@@ -23,8 +23,8 @@ public static class ExperimentControl
 
     enum CurricName { MoveToEnemyFromKills, MoveToEnemyFromKills2, LargeScenario, DeterminismTest, Test, Lab5, Lab5Test };
 
-    static CurricName curric_name = CurricName.Lab5;
-    //static CurricName curric_name = CurricName.Lab5Test;
+    //static CurricName curric_name = CurricName.Lab5;
+    static CurricName curric_name = CurricName.Lab5Test;
     //static CurricName curric_name = CurricName.MoveToEnemyFromKills2;
     //static CurricName curric_name = CurricName.Test;
     //static CurricName curric_name = CurricName.LargeScenario;
@@ -116,7 +116,7 @@ public static class ExperimentControl
 
         // Set timeScale impossibly high if this is a server build to run as fast as possible
         if (SystemInfo.graphicsDeviceID == 0)
-            Time.timeScale = 100f;
+            Time.timeScale = 5f;
 
         json_parameters = new Dictionary<string, string>();
         if (File.Exists("todo.txt"))

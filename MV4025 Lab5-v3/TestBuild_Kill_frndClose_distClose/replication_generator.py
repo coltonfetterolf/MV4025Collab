@@ -16,7 +16,7 @@ design_str = """
 		[
 			{
 				"name" : "train_duration",
-				"levels" : [ 24000 ]
+				"levels" : [ 10000 ]
 			},
 			{
 				"name" : "test_duration",
@@ -36,7 +36,7 @@ design_str = """
 			},
 			{
 				"name" : "learning_rate",
-				"levels" : [ 0.03, 0.05 ]
+				"levels" : [ 0.05 ]
 			},
 			{
 				"name" : "ranged_state",
@@ -56,7 +56,7 @@ design_str = """
 			},
 			{
 				"name" : "loss_factor",
-				"levels" : [ 0.8 ]
+				"levels" : [ 0.75 ]
 			},
 			{
 				"name" : "mobility_model",
