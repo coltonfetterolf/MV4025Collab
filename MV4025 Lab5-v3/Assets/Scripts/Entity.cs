@@ -295,12 +295,28 @@ public class Entity : MonoBehaviour
         GameObject[] nearby = GameObject.FindGameObjectsWithTag(targetTag);
         float max_val = 1.0f / range;
         float reward = 0.0f;
+        float killReward = 0.0f;
+        GameObject[] friendlyNearby = GameObject.FindGameObjectsWithTag(gameObject.tag);
+        float friendDist;
+        float friendDistReward = 0.0f;
+        float totalReward = 0.0f;
+
         foreach (GameObject target in nearby)
         {
             float dist = Vector3.Distance(target.transform.position, gameObject.transform.position);
             if (1.0 / dist > reward)
                 reward = Mathf.Min(1.0f / dist, max_val);
         }
+
+        foreach(GameObject fri in friendlyNearby)
+        {
+            if (fri == gameObject) continue;
+            friendDist = Vector3.Distance(fri.transform.position, gameObject.transform.position);
+            friendDistReward = 1/friendDist;
+        }
+        
+        killReward = kill_factor * kills_this_update - loss_factor * losses_this_update;
+        reward += killReward + friendDistReward + RewardCloserToTarget();
         return reward;
     }
 
