@@ -60,11 +60,11 @@ public static class ExperimentControl
             if (ExperimentControl.json_parameters.ContainsKey("train_duration"))
                 train_duration = float.Parse(json_parameters["train_duration"]);
 
-            test_duration = 75;
+            test_duration = 75f;
             if (ExperimentControl.json_parameters.ContainsKey("test_duration"))
                 test_duration = float.Parse(json_parameters["test_duration"]);
 
-            reward_timeout = 120f;
+            reward_timeout = 20f;
             if (ExperimentControl.json_parameters.ContainsKey("reward_timeout"))
                 reward_timeout = float.Parse(json_parameters["reward_timeout"]);
 
@@ -98,7 +98,7 @@ public static class ExperimentControl
             if (ExperimentControl.json_parameters.ContainsKey("discount_factor"))
                 discount_factor = float.Parse(json_parameters["discount_factor"]);
 
-            loss_factor = 1.6f;
+            loss_factor = 1.1f;
             if (ExperimentControl.json_parameters.ContainsKey("loss_factor"))
                 loss_factor = float.Parse(json_parameters["loss_factor"]);
 
