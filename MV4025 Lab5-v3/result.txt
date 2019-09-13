@@ -1,0 +1,4 @@
+end_time, 2019/09/13 00:16:39.2249, runtime, 15200, n_updates, 3998, runtime, 199.9199, running_ave_reward, 0, 
+end_time, 2019/09/13 01:37:39.1047, runtime, 15075, n_updates, 1336, runtime, 74.93945, running_ave_reward, 6.35787E-11, 
+end_time, 2019/09/13 04:32:51.8591, runtime, 15075, n_updates, 1498, runtime, 74.91992, running_ave_reward, 0, 
+end_time, 2019/09/13 06:32:38.9633, runtime, 15075, n_updates, 1498, runtime, 74.91992, running_ave_reward, 0, 

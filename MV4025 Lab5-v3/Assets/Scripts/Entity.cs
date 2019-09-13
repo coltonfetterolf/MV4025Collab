@@ -301,7 +301,7 @@ public class Entity : MonoBehaviour
         float friendDist;
         float friendDistReward = 0.0f;
         float totalReward = 0.0f;
-
+        float targetReward = 0.0f;
         foreach (GameObject target in nearby)
         {
             float dist = Vector3.Distance(target.transform.position, gameObject.transform.position);
@@ -313,11 +313,13 @@ public class Entity : MonoBehaviour
         {
             if (fri == gameObject) continue;
             friendDist = Vector3.Distance(fri.transform.position, gameObject.transform.position);
-            friendDistReward = friDistFactor * 1.0f / friendDist;
+            friendDistReward = (1.0f / friendDist);
+            
+
         }
         
         killReward = kill_factor * kills_this_update - loss_factor * losses_this_update;
-        reward += killReward + friendDistReward + RewardCloserToTarget();
+        reward += killReward + friendDistReward + RewardCloserToTarget() + RewardKills();
         return reward;
     }
 

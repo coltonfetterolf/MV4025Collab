@@ -56,21 +56,21 @@ public static class ExperimentControl
             if (ExperimentControl.json_parameters.ContainsKey("seed"))
                 seed = int.Parse(json_parameters["seed"]);
 
-            train_duration = 2400f;
+            train_duration = 15000f;
             if (ExperimentControl.json_parameters.ContainsKey("train_duration"))
                 train_duration = float.Parse(json_parameters["train_duration"]);
 
-            test_duration = 100f;
+            test_duration = 75;
             if (ExperimentControl.json_parameters.ContainsKey("test_duration"))
                 test_duration = float.Parse(json_parameters["test_duration"]);
 
-            reward_timeout = 20f;
+            reward_timeout = 120f;
             if (ExperimentControl.json_parameters.ContainsKey("reward_timeout"))
                 reward_timeout = float.Parse(json_parameters["reward_timeout"]);
 
             respawnOnDeath = true;
 
-            respawnWidth = 80f;
+            respawnWidth = 10f;
             if (ExperimentControl.json_parameters.ContainsKey("respawnWidth"))
                 respawnWidth = float.Parse(ExperimentControl.json_parameters["respawnWidth"]);
 
@@ -86,11 +86,11 @@ public static class ExperimentControl
             if (ExperimentControl.json_parameters.ContainsKey("learning_rate"))
                 learning_rate = float.Parse(ExperimentControl.json_parameters["learning_rate"]);
 
-            num_hidden_units = 20;
+            num_hidden_units = 60;
             if (ExperimentControl.json_parameters.ContainsKey("num_hidden_units"))
                 num_hidden_units = int.Parse(ExperimentControl.json_parameters["num_hidden_units"]);
 
-            type_hidden_units = "relu";
+            type_hidden_units = "tanh";
             if (ExperimentControl.json_parameters.ContainsKey("type_hidden_units"))
                 type_hidden_units = ExperimentControl.json_parameters["type_hidden_units"];
 
@@ -98,7 +98,7 @@ public static class ExperimentControl
             if (ExperimentControl.json_parameters.ContainsKey("discount_factor"))
                 discount_factor = float.Parse(json_parameters["discount_factor"]);
 
-            loss_factor = 1.1f;
+            loss_factor = 1.6f;
             if (ExperimentControl.json_parameters.ContainsKey("loss_factor"))
                 loss_factor = float.Parse(json_parameters["loss_factor"]);
 
@@ -116,7 +116,7 @@ public static class ExperimentControl
 
         // Set timeScale impossibly high if this is a server build to run as fast as possible
         if (SystemInfo.graphicsDeviceID == 0)
-            Time.timeScale = 1000000000000000000000000000000000000f;
+            Time.timeScale = 100f;
 
         json_parameters = new Dictionary<string, string>();
         if (File.Exists("todo.txt"))
